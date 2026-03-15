@@ -20,7 +20,13 @@ if (!hasApiKey) {
 const client = hasApiKey ? new Anthropic() : null;
 
 app.use(express.json());
-app.use(express.static(join(__dirname, 'public')));
+
+// Serve built React app from dist/ (production) or public/ (fallback)
+import { existsSync } from 'fs';
+const distDir = join(__dirname, 'dist');
+const publicDir = join(__dirname, 'public');
+const staticDir = existsSync(distDir) ? distDir : publicDir;
+app.use(express.static(staticDir));
 
 // Return philosopher list (without system prompts)
 app.get('/api/philosophers', (_req, res) => {
@@ -78,6 +84,11 @@ app.post('/api/chat', async (req, res) => {
     res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
     res.end();
   }
+});
+
+// SPA fallback — serve index.html for non-API routes
+app.get('*', (_req, res) => {
+  res.sendFile(join(staticDir, 'index.html'));
 });
 
 app.listen(PORT, () => {

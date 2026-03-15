@@ -5,10 +5,28 @@
   "description": "Chat with history's greatest philosophers",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev:server": "node --watch server.js",
+    "dev:client": "vite --port 3001",
+    "dev": "node --watch server.js & vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
-    "express": "^4.21.0"
+    "@radix-ui/react-slot": "^1.2.4",
+    "@tailwindcss/vite": "^4.2.1",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "express": "^4.21.0",
+    "lucide-react": "^0.577.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwind-merge": "^3.5.0",
+    "tailwindcss": "^4.2.1",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.0"
   }
 }

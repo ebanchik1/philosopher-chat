@@ -13,37 +13,6 @@
 <body>
   <div class="app" id="app">
 
-    <!-- Mobile header bar -->
-    <header class="mobile-header" id="mobile-header">
-      <button class="menu-toggle" id="menu-toggle" aria-label="Open philosopher list">
-        <span></span><span></span><span></span>
-      </button>
-      <h1 class="mobile-title">Philosophia</h1>
-    </header>
-
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-header">
-        <div class="logo">
-          <span class="logo-phi">&Phi;</span>
-          <div class="logo-text">
-            <h1>Philosophia</h1>
-            <p>Dialogues with Great Thinkers</p>
-          </div>
-        </div>
-      </div>
-      <div class="sidebar-divider"><span></span></div>
-      <nav class="philosopher-list" id="philosopher-list" role="list" aria-label="Philosophers">
-        <!-- Rendered by JS -->
-      </nav>
-      <div class="sidebar-footer">
-        <p>Responses grounded in primary texts</p>
-      </div>
-    </aside>
-
-    <!-- Mobile overlay -->
-    <div class="sidebar-overlay" id="sidebar-overlay"></div>
-
     <!-- Main content -->
     <main class="main" id="main">
 
@@ -54,11 +23,10 @@
           <h2 class="welcome-title">Philosophia</h2>
           <p class="welcome-subtitle">Dialogues with Great Thinkers</p>
           <div class="ornamental-divider"><span></span></div>
-          <blockquote class="welcome-quote">
-            <p>&ldquo;The only true wisdom is in knowing you know nothing.&rdquo;</p>
-            <cite>Socrates, via Plato</cite>
-          </blockquote>
-          <p class="welcome-cta">Select a philosopher to begin your dialogue</p>
+          <p class="welcome-cta">Choose a philosopher to begin your dialogue</p>
+          <div class="philosopher-grid" id="philosopher-grid">
+            <!-- Rendered by JS -->
+          </div>
         </div>
       </div>
 
@@ -66,7 +34,7 @@
       <div class="chat-container" id="chat-container" hidden>
         <div class="chat-header" id="chat-header">
           <div class="chat-header-left">
-            <button class="back-btn" id="back-btn" aria-label="Back to philosopher list">
+            <button class="back-btn" id="back-btn" aria-label="Back to philosophers">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
             </button>
             <div class="chat-header-avatar" id="chat-avatar"></div>
