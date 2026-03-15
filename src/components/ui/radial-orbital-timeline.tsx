@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useLayoutEffect } from "react";
 import { ArrowRight, Link, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,32 +40,53 @@ export default function RadialOrbitalTimeline({
     y: 0,
   });
   const [orbitRadius, setOrbitRadius] = useState<number>(200);
+  const [orbitCenterY, setOrbitCenterY] = useState<number>(400);
   const [activeNodeId, setActiveNodeId] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const orbitRef = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
-  // Responsive radius calculation based on actual available space
-  const updateRadius = useCallback(() => {
+  // Responsive radius + center calculation
+  const computeLayout = useCallback(() => {
     const w = window.innerWidth;
     const h = window.innerHeight;
-    // Title ~100px, bottom hint ~30px, nodes extend ~80px beyond orbit (image + label)
-    const titleHeight = w < 640 ? 90 : 110;
-    const bottomPad = 30;
-    const nodeOverflow = w < 640 ? 90 : 70; // image + label + padding (tighter on mobile)
+    const titleHeight = w < 640 ? 100 : 120;
+    const bottomPad = 50;
+    const nodeOverflow = w < 640 ? 90 : 70;
     const availableH = h - titleHeight - bottomPad - nodeOverflow * 2;
     const availableW = w - nodeOverflow * 2;
     const maxByHeight = availableH / 2;
     const maxByWidth = availableW / 2;
-    const computed = Math.min(maxByHeight, maxByWidth, 200);
-    setOrbitRadius(Math.max(60, computed));
+    const radius = Math.max(90, Math.min(maxByHeight, maxByWidth, 260));
+    // Center of orbit in viewport coordinates
+    const centerY = titleHeight + nodeOverflow + radius;
+    return { radius, centerY };
   }, []);
 
+  // Set layout on mount synchronously to avoid flash
+  useLayoutEffect(() => {
+    const { radius, centerY } = computeLayout();
+    setOrbitRadius(radius);
+    setOrbitCenterY(centerY);
+  }, [computeLayout]);
+
+  // Debounced resize handler
   useEffect(() => {
-    updateRadius();
-    window.addEventListener("resize", updateRadius);
-    return () => window.removeEventListener("resize", updateRadius);
-  }, [updateRadius]);
+    let rafId: number;
+    const handleResize = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        const { radius, centerY } = computeLayout();
+        setOrbitRadius(radius);
+        setOrbitCenterY(centerY);
+      });
+    };
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      cancelAnimationFrame(rafId);
+    };
+  }, [computeLayout]);
 
   const handleContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === containerRef.current || e.target === orbitRef.current) {
@@ -109,20 +130,26 @@ export default function RadialOrbitalTimeline({
   // Pause rotation on hover OR when a card is expanded
   const shouldRotate = autoRotate && hoveredNodeId === null;
 
+  // Use requestAnimationFrame for smooth 60fps rotation
+  const angleRef = useRef(rotationAngle);
+  const lastFrameRef = useRef<number>(0);
+
   useEffect(() => {
-    let rotationTimer: ReturnType<typeof setInterval>;
-    if (shouldRotate) {
-      rotationTimer = setInterval(() => {
-        setRotationAngle((prev) => {
-          const newAngle = (prev + 0.3) % 360;
-          return Number(newAngle.toFixed(3));
-        });
-      }, 50);
-    }
+    if (!shouldRotate) return;
+    let rafId: number;
+    const animate = (timestamp: number) => {
+      if (!lastFrameRef.current) lastFrameRef.current = timestamp;
+      const delta = timestamp - lastFrameRef.current;
+      lastFrameRef.current = timestamp;
+      // ~6 degrees per second (smooth, consistent speed regardless of frame rate)
+      angleRef.current = (angleRef.current + delta * 0.006) % 360;
+      setRotationAngle(angleRef.current);
+      rafId = requestAnimationFrame(animate);
+    };
+    rafId = requestAnimationFrame(animate);
     return () => {
-      if (rotationTimer) {
-        clearInterval(rotationTimer);
-      }
+      cancelAnimationFrame(rafId);
+      lastFrameRef.current = 0;
     };
   }, [shouldRotate]);
 
@@ -131,7 +158,9 @@ export default function RadialOrbitalTimeline({
     const nodeIndex = timelineData.findIndex((item) => item.id === nodeId);
     const totalNodes = timelineData.length;
     const targetAngle = (nodeIndex / totalNodes) * 360;
-    setRotationAngle(270 - targetAngle);
+    const newAngle = 270 - targetAngle;
+    angleRef.current = newAngle;
+    setRotationAngle(newAngle);
   };
 
   const calculateNodePosition = (index: number, total: number) => {
@@ -187,19 +216,15 @@ export default function RadialOrbitalTimeline({
         <p className="text-[10px] sm:text-xs tracking-widest uppercase text-white/40 mt-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>Dialogues with Great Thinkers</p>
       </div>
 
-      <div className="relative w-full max-w-4xl flex-1 flex items-center justify-center"
-        style={{ marginTop: orbitRadius < 150 ? '-70px' : '-10px' }}
+      <div
+        className="absolute inset-0"
+        ref={orbitRef}
+        style={{ perspective: "1000px" }}
       >
-        <div
-          className="absolute w-full h-full flex items-center justify-center"
-          ref={orbitRef}
-          style={{
-            perspective: "1000px",
-            transform: `translate(${centerOffset.x}px, ${centerOffset.y}px)`,
-          }}
-        >
           {/* Center orb */}
-          <div className="absolute w-16 h-16 rounded-full bg-gradient-to-br from-amber-600 via-amber-500 to-yellow-400 animate-pulse flex items-center justify-center z-10">
+          <div className="absolute w-16 h-16 rounded-full bg-gradient-to-br from-amber-600 via-amber-500 to-yellow-400 animate-pulse flex items-center justify-center z-10"
+            style={{ top: `${orbitCenterY}px`, left: '50%', transform: 'translate(-50%, -50%)' }}
+          >
             <div className="absolute w-20 h-20 rounded-full border border-amber-300/20 animate-ping opacity-70"></div>
             <div
               className="absolute w-24 h-24 rounded-full border border-amber-200/10 animate-ping opacity-50"
@@ -211,7 +236,13 @@ export default function RadialOrbitalTimeline({
           {/* Orbit ring — responsive */}
           <div
             className="absolute rounded-full border border-white/10"
-            style={{ width: `${orbitDiameter}px`, height: `${orbitDiameter}px` }}
+            style={{
+              width: `${orbitDiameter}px`,
+              height: `${orbitDiameter}px`,
+              top: `${orbitCenterY}px`,
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+            }}
           ></div>
 
           {/* Nodes */}
@@ -236,8 +267,16 @@ export default function RadialOrbitalTimeline({
               <div
                 key={item.id}
                 ref={(el) => { nodeRefs.current[item.id] = el; }}
-                className="absolute transition-all duration-700 cursor-pointer"
-                style={nodeStyle}
+                className="absolute cursor-pointer"
+                style={{
+                  top: `${orbitCenterY}px`,
+                  left: '50%',
+                  transform: `translate(calc(-50% + ${position.x}px), calc(-50% + ${position.y}px))`,
+                  zIndex: isExpanded ? 200 : isHovered ? 190 : position.zIndex,
+                  opacity: isExpanded || isHovered ? 1 : position.opacity,
+                  transition: 'opacity 0.3s ease',
+                  willChange: 'transform',
+                }}
                 onClick={(e) => {
                   e.stopPropagation();
                   toggleItem(item.id);
@@ -349,7 +388,6 @@ export default function RadialOrbitalTimeline({
             );
           })}
         </div>
-      </div>
 
       {/* Expanded card overlay — fixed to viewport center so it never clips */}
       {(() => {
