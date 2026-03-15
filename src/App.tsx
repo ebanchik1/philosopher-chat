@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import {
   BookOpen,
   Scroll,
@@ -108,17 +109,23 @@ export default function App() {
 
   if (error) {
     return (
-      <div className="w-full h-screen flex items-center justify-center bg-black text-white/70">
-        <p>{error}</p>
-      </div>
+      <>
+        <div className="w-full h-screen flex items-center justify-center bg-black text-white/70">
+          <p>{error}</p>
+        </div>
+        <Analytics />
+      </>
     );
   }
 
   if (philosophers.length === 0) {
     return (
-      <div className="w-full h-screen flex items-center justify-center bg-black text-white/50">
-        <p>Loading...</p>
-      </div>
+      <>
+        <div className="w-full h-screen flex items-center justify-center bg-black text-white/50">
+          <p>Loading...</p>
+        </div>
+        <Analytics />
+      </>
     );
   }
 
@@ -135,6 +142,7 @@ export default function App() {
             onBack={() => setSelectedId(null)}
           />
         </main>
+        <Analytics />
       </div>
     );
   }
@@ -142,9 +150,12 @@ export default function App() {
   const timelineData = buildTimelineData(philosophers);
 
   return (
-    <RadialOrbitalTimeline
-      timelineData={timelineData}
-      onNodeClick={(philosopherId) => setSelectedId(philosopherId)}
-    />
+    <>
+      <RadialOrbitalTimeline
+        timelineData={timelineData}
+        onNodeClick={(philosopherId) => setSelectedId(philosopherId)}
+      />
+      <Analytics />
+    </>
   );
 }
