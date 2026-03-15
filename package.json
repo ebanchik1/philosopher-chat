@@ -1,0 +1,14 @@
+{
+  "name": "philosopher-chat",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Chat with history's greatest philosophers",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "express": "^4.21.0"
+  }
+}
